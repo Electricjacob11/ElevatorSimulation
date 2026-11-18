@@ -17,3 +17,6 @@ test:
 		fi; \
 	done; \
 	exit $$failed
+	
+clean:
+	rm -rf actual_output
