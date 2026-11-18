@@ -6,7 +6,7 @@ def run_elevator():
     destination = None
     stops = {1: False, 2: False, 3: False}
 
-    def findNextDest():
+    def determine_next_destination():
         nonlocal destination
         if current_floor == 1:
             if stops[2] or stops[3]:
@@ -23,7 +23,6 @@ def run_elevator():
             else:
                 destination = None
         elif current_floor == 2:
-            # Check above first, then below
             if stops[3]:
                 destination = 3
             elif stops[1]:
@@ -36,7 +35,6 @@ def run_elevator():
         if not event:
             continue
 
-        # Register requests regardless of state
         if event in ["CAR_FLOOR1", "FLOOR1_UP"]:
             stops[1] = True
         elif event in ["CAR_FLOOR2", "FLOOR2_UP", "FLOOR2_DOWN"]:
@@ -49,10 +47,10 @@ def run_elevator():
                 print("OPEN_DOOR")
                 stops[1] = False
             else:
-                findNextDest()
-                if destination == 2 or destination == 3:
+                determine_next_destination()
+                if destination:
                     print("CLOSE_DOOR")
-                    print("MOVE_UP_FAST" if destination == 3 else "MOVE_UP_SLOW") # or fast/slow logic
+                    print("MOVE_UP_FAST")
                     state = f"MovingUpToFloor{destination}"
 
         elif state == "IdleFloor2":
@@ -60,7 +58,7 @@ def run_elevator():
                 print("OPEN_DOOR")
                 stops[2] = False
             else:
-                findNextDest()
+                determine_next_destination()
                 if destination == 3:
                     print("CLOSE_DOOR")
                     print("MOVE_UP_FAST")
@@ -75,15 +73,17 @@ def run_elevator():
                 print("OPEN_DOOR")
                 stops[3] = False
             else:
-                findNextDest()
-                if destination == 1 or destination == 2:
+                determine_next_destination()
+                if destination:
                     print("CLOSE_DOOR")
-                    print("MOVE_DOWN_FAST" if destination == 1 else "MOVE_DOWN_SLOW")
+                    print("MOVE_DOWN_FAST")
                     state = f"MovingDownToFloor{destination}"
 
         elif state in ["MovingUpToFloor2", "MovingUpToFloor3"]:
             target_f = 2 if "2" in state else 3
-            if event == "BETWEEN_1_2" and target_f == 3:
+            if event == "BETWEEN_1_2" and target_f == 2:
+                print("MOVE_UP_SLOW")
+            elif event == "BETWEEN_2_3" and target_f == 3:
                 print("MOVE_UP_SLOW")
             elif event == f"AT_FLOOR{target_f}":
                 print("STOP")
@@ -91,15 +91,14 @@ def run_elevator():
                 current_floor = target_f
                 stops[target_f] = False
                 
-                # Check if more stops in same direction or reverse
-                findNextDest()
+                determine_next_destination()
                 if destination and destination > current_floor:
                     print("CLOSE_DOOR")
-                    print("MOVE_UP_FAST" if destination == 3 and current_floor == 1 else "MOVE_UP_SLOW")
+                    print("MOVE_UP_FAST")
                     state = f"MovingUpToFloor{destination}"
                 elif destination and destination < current_floor:
                     print("CLOSE_DOOR")
-                    print("MOVE_DOWN_FAST" if destination == 1 and current_floor == 3 else "MOVE_DOWN_SLOW")
+                    print("MOVE_DOWN_FAST")
                     state = f"MovingDownToFloor{destination}"
                 else:
                     state = f"IdleFloor{current_floor}"
@@ -108,20 +107,22 @@ def run_elevator():
             target_f = 1 if "1" in state else 2
             if event == "BETWEEN_2_3" and target_f == 2:
                 print("MOVE_DOWN_SLOW")
+            elif event == "BETWEEN_1_2" and target_f == 1:
+                print("MOVE_DOWN_SLOW")
             elif event == f"AT_FLOOR{target_f}":
                 print("STOP")
                 print("OPEN_DOOR")
                 current_floor = target_f
                 stops[target_f] = False
 
-                findNextDest()
+                determine_next_destination()
                 if destination and destination > current_floor:
                     print("CLOSE_DOOR")
-                    print("MOVE_UP_FAST" if destination == 3 else "MOVE_UP_SLOW")
+                    print("MOVE_UP_FAST")
                     state = f"MovingUpToFloor{destination}"
                 elif destination and destination < current_floor:
                     print("CLOSE_DOOR")
-                    print("MOVE_DOWN_FAST" if destination == 1 else "MOVE_DOWN_SLOW")
+                    print("MOVE_DOWN_FAST")
                     state = f"MovingDownToFloor{destination}"
                 else:
                     state = f"IdleFloor{current_floor}"
